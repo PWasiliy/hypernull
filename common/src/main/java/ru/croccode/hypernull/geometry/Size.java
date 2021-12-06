@@ -22,4 +22,7 @@ public class Size {
 	public int height() {
 		return height;
 	}
+
+	@Override
+	public String toString() { return String.format("(W: %d, H: %d)", this.width, this.height); }
 }
