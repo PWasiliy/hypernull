@@ -9,5 +9,5 @@ public class StringCommand {
         this.action = action;
     }
     public String description() { return this.description; }
-    public StringCommandAction action(String[] args) { return this.action(args); }
+    public void execute(String[] args) {this.action.execute(args); }
 }
