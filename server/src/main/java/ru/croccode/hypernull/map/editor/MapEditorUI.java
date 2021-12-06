@@ -11,11 +11,14 @@ import java.util.stream.Stream;
 public class MapEditorUI {
     private static final String COMMAND_INFO_FORMAT = "\"%s\" - %s\n";
     public static void main(String[] args) {
+        MapEditor mapEditor = new MapEditor();
+
         Map<String, StringCommand> commands = new HashMap<>();
-        commands.put("open", new StringCommand("открыть карту из файла .map", null));
+        commands.put("open", new StringCommand("открыть карту из файла .map", mapEditor::open));
         commands.put("new clear", new StringCommand("создать новую пустую карту", null));
         commands.put("new random", new StringCommand("создать новую случайную карту", null));
         commands.put("save file", new StringCommand("сохранить карту в файл", null));
+        commands.put("print", new StringCommand("напечатать карту в консоле", mapEditor::printMap));
 
         System.out.printf(COMMAND_INFO_FORMAT, "help", "список команд");
         System.out.printf(COMMAND_INFO_FORMAT, "end", "завершить работу");
@@ -27,7 +30,7 @@ public class MapEditorUI {
                 continue;
 
             if (commands.containsKey(strings[0]))
-                    commands.get(strings[0]).action(Arrays.copyOfRange(strings, 1, strings.length));
+                    commands.get(strings[0]).execute(Arrays.copyOfRange(strings, 1, strings.length));
             else if (strings.length == 1)
                 if (strings[0].equalsIgnoreCase("help")) {
                     StringBuilder stringBuilder = new StringBuilder();
