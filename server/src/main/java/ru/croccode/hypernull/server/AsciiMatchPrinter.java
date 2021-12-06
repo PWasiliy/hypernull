@@ -133,6 +133,10 @@ public class AsciiMatchPrinter implements MatchListener<Integer> {
 		System.out.println();
 		System.out.println();
 
+		AsciiMatchPrinter.printMap(this.map, this.coins, this.bots);
+	}
+
+	public static void printMap(MatchMap map, Set<Point> coins, Map<Integer, BotState> bots) {
 		int viewRadius2 = map.getViewRadius() * map.getViewRadius();
 		int miningRadius2 = map.getMiningRadius() * map.getMiningRadius();
 		int attackRadius2 = map.getAttackRadius() * map.getAttackRadius();
@@ -143,9 +147,9 @@ public class AsciiMatchPrinter implements MatchListener<Integer> {
 				if (map.isBlocked(p)) {
 					c = BLOCK;
 				} else {
-					if (coins.contains(p)) {
+					if (coins != null && coins.contains(p)) {
 						c = COIN;
-					} else {
+					} else if (bots != null) {
 						boolean isBot = false;
 						boolean inViewRadius = false;
 						boolean inMiningRadius = false;
