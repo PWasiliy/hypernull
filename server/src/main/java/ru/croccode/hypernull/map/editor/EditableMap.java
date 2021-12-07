@@ -9,8 +9,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EditableMap implements MatchMap {
+    private static final String MUST_BE_MORE_THEN_ZERO = "%s карты матча должна быть больше нуля.";
+
     public static class Radius {
         public int view, mining, attack;
+        public Radius(int view, int mining, int attack) {
+            this.attack = attack;
+            this.mining = mining;
+            this.view = view;
+        }
+        public Radius() {
+            this(0, 0, 0);
+        }
         public void setAll(int value) {
             this.attack = value;
             this.mining = value;
@@ -26,18 +36,17 @@ public class EditableMap implements MatchMap {
         FREE, BLOCKED, SPAWN;
     }
 
-    private final PointState[][] points;
+    private PointState[][] points;
     private final Radius radius;
 
     public EditableMap(int width, int height) {
-        Check.condition(width > 0, "Ширина карты матча должна быть больше нуля.");
-        Check.condition(height > 0, "Высота карты матча должна быть больше нуля.");
-
-        this.points = new PointState[width][height];
+        this.points = new PointState[0][0];
         this.radius = new Radius();
+
+        this.setSize(width, height);
     }
     public Radius radius() { return radius; }
-    public boolean isInside(int x, int y) { return x >= 0 && x <= this.getSize().width() && y >= 0 && y <= this.getSize().width(); }
+    public boolean isInside(int x, int y) { return x >= 0 && x < this.getSize().width() && y >= 0 && y < this.getSize().height(); }
     public boolean isInside(Point point) { return this.isInside(point.x(), point.y()); }
     public void setPointState(int x, int y, PointState state) {
         this.checkIsInside(x, y);
@@ -48,6 +57,16 @@ public class EditableMap implements MatchMap {
     public void setFree(int x, int y) {
         this.checkIsInside(x, y);
         this.points[x][y] = null;
+    }
+    public void setSize(int width, int height) {
+        Check.condition(width > 0, String.format(MUST_BE_MORE_THEN_ZERO, "Ширина"));
+        Check.condition(height > 0, String.format(MUST_BE_MORE_THEN_ZERO, "Высота"));
+
+        PointState[][] copy = new PointState[width][height];
+        for (int i = 0; i < Math.min(this.points.length, copy.length); i++)
+            System.arraycopy(this.points[i], 0, copy[i], 0, Math.min(this.points[i].length, copy[i].length));
+
+        this.points = copy;
     }
 
     @Override

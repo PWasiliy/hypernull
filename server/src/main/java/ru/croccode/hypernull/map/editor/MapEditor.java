@@ -1,22 +1,23 @@
 package ru.croccode.hypernull.map.editor;
 
 import ru.croccode.hypernull.geometry.Point;
+import ru.croccode.hypernull.map.RandomMap;
 import ru.croccode.hypernull.server.AsciiMatchPrinter;
 import ru.croccode.hypernull.util.Check;
 import ru.croccode.hypernull.util.Question;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
 public class MapEditor {
     private static final String RELOAD_MAP = "%s приведет к потере несохраненных изменений. Продолжить?";
-    private static final String METHOD_ARGS_COUNT = "Количество аргументов метода равно %d, передано - %d.";
-    private static final String MAP_FILE_INVALID_FORMAT = "Некорректный формат .map у файла \"%s\" в строке номер %d.";
-    private static final String NO_MAP_DATA = "В редакторе отсутствует информция о карте матча.";
+    private static final String METHOD_ARGS_COUNT = "Количество аргументов метода равно %d, передано - %d.\n";
+    private static final String MAP_FILE_INVALID_FORMAT = "Некорректный формат .map у файла \"%s\" в строке номер %d.\n";
+    private static final String NO_MAP_DATA = "В редакторе отсутствует информция о карте матча.\n";
+    private static final String POINT_NOT_INSIDE = "Точка %s не попадает в размеры карты %s.\n";
 
     private EditableMap map;
 
@@ -63,13 +64,76 @@ public class MapEditor {
 
     public void printMap() {
         if (this.map == null) {
-            System.out.println("NO_MAP_DATA");
+            System.out.println(NO_MAP_DATA);
         } else
             AsciiMatchPrinter.printMap(this.map, null, null);
     }
     public void printMap(String[] args) {
         Check.condition(args.length == 0, String.format(METHOD_ARGS_COUNT, 0, args.length));
         this.printMap();
+    }
+
+    public void setPointState(int x, int y, EditableMap.PointState state) {
+       if (this.map == null) {
+           System.out.println(NO_MAP_DATA);
+       } else {
+           if (!this.map.isInside(x, y)) {
+               System.out.printf(POINT_NOT_INSIDE, new Point(x, y), this.map.getSize());
+           } else
+               this.map.setPointState(x, y, state);
+       }
+
+    }
+    public void setPointState(String[] args) {
+        Check.condition(args.length == 3, String.format(METHOD_ARGS_COUNT, 3, args.length));
+        this.setPointState(Integer.parseInt(args[0]), Integer.parseInt(args[1]), EditableMap.PointState.valueOf(args[2].toUpperCase()));
+    }
+
+    public void setMapSize(int width, int height) {
+        if (this.map == null) {
+            System.out.printf(NO_MAP_DATA);
+            return;
+        }
+
+        this.map.setSize(width, height);
+    }
+    public void setMapSize(String[] args) {
+        Check.condition(args.length == 2, String.format(METHOD_ARGS_COUNT, 2, args.length));
+        this.setMapSize(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+    }
+
+    public void createMap(int width, int height) {
+        if (this.map != null && !Question.ask(String.format(RELOAD_MAP, "Создание новой пустой карты матча")))
+            return;
+
+        this.map = new EditableMap(width, height);
+    }
+    public void createMap(String[] args) {
+        Check.condition(args.length == 2, String.format(METHOD_ARGS_COUNT, 2, args.length));
+        this.createMap(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+    }
+
+    public void createRandomMap() {
+        if (this.map != null && !Question.ask(String.format(RELOAD_MAP, "Создание новой случайной карты матча")))
+            return;
+
+        RandomMap randomMap = new RandomMap(0);
+        if (this.map == null) {
+            this.createMap(randomMap.getWidth(), randomMap.getHeight());
+        } else
+            this.map.setSize(randomMap.getWidth(), randomMap.getHeight());
+
+        this.map.radius().assign(new EditableMap.Radius(randomMap.getViewRadius(), randomMap.getMiningRadius(), randomMap.getAttackRadius()));
+        for (Point point : randomMap.getSpawnPositions())
+            this.map.setSpawn(point.x(), point.y());
+
+        for (int i = 0; i < this.map.getWidth(); i++)
+            for (int j = 0; j < this.map.getHeight(); j++)
+                this.map.setPointState(i, j, randomMap.isBlocked(i, j) ? EditableMap.PointState.BLOCKED : EditableMap.PointState.FREE);
+    }
+    public void createRandomMap(String[] args) {
+        Check.condition(args.length == 0);
+        this.createRandomMap();
     }
 
     public static String[] checkMapFileLine(String line, int lineNumber, String filename) {

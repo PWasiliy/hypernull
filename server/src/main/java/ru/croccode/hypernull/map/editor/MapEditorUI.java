@@ -4,9 +4,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class MapEditorUI {
     private static final String COMMAND_INFO_FORMAT = "\"%s\" - %s\n";
@@ -15,10 +12,12 @@ public class MapEditorUI {
 
         Map<String, StringCommand> commands = new HashMap<>();
         commands.put("open", new StringCommand("открыть карту из файла .map", mapEditor::open));
-        commands.put("new clear", new StringCommand("создать новую пустую карту", null));
-        commands.put("new random", new StringCommand("создать новую случайную карту", null));
-        commands.put("save file", new StringCommand("сохранить карту в файл", null));
+        commands.put("new-empty", new StringCommand("создать новую пустую карту", mapEditor::createMap));
+        commands.put("new-random", new StringCommand("создать новую случайную карту", mapEditor::createRandomMap));
+        commands.put("save-file", new StringCommand("сохранить карту в файл", null));
         commands.put("print", new StringCommand("напечатать карту в консоле", mapEditor::printMap));
+        commands.put("point", new StringCommand("изменить тип точки на карте", mapEditor::setPointState));
+        commands.put("set-size", new StringCommand("изменить размеры карты", mapEditor::setMapSize));
 
         System.out.printf(COMMAND_INFO_FORMAT, "help", "список команд");
         System.out.printf(COMMAND_INFO_FORMAT, "end", "завершить работу");
