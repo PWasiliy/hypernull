@@ -22,29 +22,29 @@ public class EditableMap implements MatchMap {
             this.view = radius.view;
         }
     }
+    public enum PointState {
+        FREE, BLOCKED, SPAWN;
+    }
 
-    private final MapPoint[][] points;
+    private final PointState[][] points;
     private final Radius radius;
 
     public EditableMap(int width, int height) {
         Check.condition(width > 0, "Ширина карты матча должна быть больше нуля.");
         Check.condition(height > 0, "Высота карты матча должна быть больше нуля.");
 
-        this.points = new MapPoint[width][height];
+        this.points = new PointState[width][height];
         this.radius = new Radius();
     }
     public Radius radius() { return radius; }
     public boolean isInside(int x, int y) { return x >= 0 && x <= this.getSize().width() && y >= 0 && y <= this.getSize().width(); }
     public boolean isInside(Point point) { return this.isInside(point.x(), point.y()); }
-    public void setPointState(int x, int y, MapPoint.State state) {
+    public void setPointState(int x, int y, PointState state) {
         this.checkIsInside(x, y);
-        if (this.points[x][y] == null)
-            this.points[x][y] = new MapPoint(x, y, state);
-        else
-            this.points[x][y].state = state;
+        this.points[x][y] = state;
     }
-    public void setBlocked(int x, int y) { this.setPointState(x, y, MapPoint.State.BLOCKED); }
-    public void setSpawn(int x, int y) { this.setPointState(x, y, MapPoint.State.SPAWN); }
+    public void setBlocked(int x, int y) { this.setPointState(x, y, PointState.BLOCKED); }
+    public void setSpawn(int x, int y) { this.setPointState(x, y, PointState.SPAWN); }
     public void setFree(int x, int y) {
         this.checkIsInside(x, y);
         this.points[x][y] = null;
@@ -57,15 +57,15 @@ public class EditableMap implements MatchMap {
     @Override
     public boolean isBlocked(Point point) {
         this.checkIsInside(point);
-        return points[point.x()][point.y()] != null && points[point.x()][point.y()].isBlocked();
+        return points[point.x()][point.y()] == PointState.BLOCKED;
     }
     @Override
     public List<Point> getSpawnPositions() {
         ArrayList<Point> result = new ArrayList<>();
         for (int x = 0; x < this.getWidth(); x++)
             for (int y = 0; y < this.getHeight(); y++)
-                if (this.points[x][y].isSpawn())
-                    result.add(points[x][y]);
+                if (this.points[x][y] == PointState.SPAWN)
+                    result.add(new Point(x, y));
 
         return result;
     }

@@ -8,6 +8,8 @@ import ru.croccode.hypernull.util.Question;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 public class MapEditor {
@@ -29,7 +31,7 @@ public class MapEditor {
 
         int width = 0, height = 0, line = 1;
         EditableMap.Radius radius = new EditableMap.Radius();
-        ArrayList<MapPoint> points = new ArrayList<>();
+        Map<Point, EditableMap.PointState> points = new HashMap<>();
 
         while (scanner.hasNext()) {
             String[] strings = MapEditor.checkMapFileLine(scanner.nextLine(), line, filename);
@@ -38,8 +40,8 @@ public class MapEditor {
                 case 2 : radius.view = Integer.parseInt(strings[1]); break;
                 case 3 : radius.mining = Integer.parseInt(strings[1]); break;
                 case 4 : radius.attack = Integer.parseInt(strings[1]); break;
-                default : points.add(new MapPoint(Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
-                    strings[0].equalsIgnoreCase("block") ? MapPoint.State.BLOCKED :  MapPoint.State.SPAWN));
+                default : points.put(new Point(Integer.parseInt(strings[1]), Integer.parseInt(strings[2])),
+                    strings[0].equalsIgnoreCase("block") ? EditableMap.PointState.BLOCKED : EditableMap.PointState.SPAWN);
             }
 
             line++;
@@ -50,7 +52,7 @@ public class MapEditor {
 
         this.map = new EditableMap(width, height);
         this.map.radius().assign(radius);
-        points.forEach((point) -> map.setPointState(point.x(), point.y(), point.state));
+        points.forEach((point, state) -> map.setPointState(point.x(), point.y(), state));
 
         System.out.println("Чтение завершено успешно.");
     }
