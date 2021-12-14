@@ -58,48 +58,78 @@ public class MapEditor {
         System.out.println("Чтение завершено успешно.");
     }
     public void open(String[] args) {
-        Check.condition(args.length == 1, String.format(METHOD_ARGS_COUNT, 1, args.length));
+        if (!this.canChangeMap(args, 1, false))
+            return;
+
         this.open(args[0]);
     }
 
     public void printMap() {
-        if (this.map == null) {
-            System.out.println(NO_MAP_DATA);
-        } else
-            AsciiMatchPrinter.printMap(this.map, null, null);
+        AsciiMatchPrinter.printMap(this.map, null, null);
     }
     public void printMap(String[] args) {
-        Check.condition(args.length == 0, String.format(METHOD_ARGS_COUNT, 0, args.length));
+        if (!this.canChangeMap(args, 0))
+            return;
+
         this.printMap();
     }
 
     public void setPointState(int x, int y, EditableMap.PointState state) {
-       if (this.map == null) {
-           System.out.println(NO_MAP_DATA);
-       } else {
-           if (!this.map.isInside(x, y)) {
-               System.out.printf(POINT_NOT_INSIDE, new Point(x, y), this.map.getSize());
-           } else
-               this.map.setPointState(x, y, state);
-       }
-
+       if (!this.map.isInside(x, y)) {
+           System.out.printf(POINT_NOT_INSIDE, new Point(x, y), this.map.getSize());
+       } else
+           this.map.setPointState(x, y, state);
     }
     public void setPointState(String[] args) {
-        Check.condition(args.length == 3, String.format(METHOD_ARGS_COUNT, 3, args.length));
+        if (!this.canChangeMap(args, 3))
+            return;
+
         this.setPointState(Integer.parseInt(args[0]), Integer.parseInt(args[1]), EditableMap.PointState.valueOf(args[2].toUpperCase()));
     }
 
-    public void setMapSize(int width, int height) {
-        if (this.map == null) {
-            System.out.printf(NO_MAP_DATA);
+    public void setPointsState(Point leftBottom, Point rightTop, EditableMap.PointState state) {
+        if (!this.map.isInside(leftBottom) || !this.map.isInside(rightTop)) {
+            System.out.printf(POINT_NOT_INSIDE, !this.map.isInside(leftBottom) ? leftBottom : rightTop, this.map.getSize());
             return;
         }
 
-        this.map.setSize(width, height);
+        for (int x = leftBottom.x(); x <= rightTop.x(); x++)
+            for (int y = leftBottom.y(); y <= rightTop.y(); y++)
+                this.setPointState(x, y, state);
     }
+    public void setPointsState(String[] args) {
+        if (!this.canChangeMap(args, 5))
+            return;
+
+        this.setPointsState(new Point(Integer.parseInt(args[0]), Integer.parseInt(args[1])),
+                new Point(Integer.parseInt(args[2]), Integer.parseInt(args[3])), EditableMap.PointState.valueOf(args[4].toUpperCase()));
+    }
+
+    public void setMapSize(int width, int height) { this.map.setSize(width, height); }
     public void setMapSize(String[] args) {
-        Check.condition(args.length == 2, String.format(METHOD_ARGS_COUNT, 2, args.length));
+        if (!this.canChangeMap(args, 2))
+            return;
+
         this.setMapSize(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+    }
+
+    public void setMapRadiusView(String[] args) {
+        if (!this.canChangeMap(args, 1))
+            return;
+
+        this.map.radius().view = Integer.parseInt(args[0]);
+    }
+    public void setMapRadiusAttack(String[] args) {
+        if (!this.canChangeMap(args, 1))
+            return;
+
+        this.map.radius().attack = Integer.parseInt(args[0]);
+    }
+    public void setMapRadiusMining(String[] args) {
+        if (!this.canChangeMap(args, 1))
+            return;
+
+        this.map.radius().mining = Integer.parseInt(args[0]);
     }
 
     public void createMap(int width, int height) {
@@ -109,7 +139,9 @@ public class MapEditor {
         this.map = new EditableMap(width, height);
     }
     public void createMap(String[] args) {
-        Check.condition(args.length == 2, String.format(METHOD_ARGS_COUNT, 2, args.length));
+        if (!this.canChangeMap(args, 2, false))
+            return;
+
         this.createMap(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
     }
 
@@ -132,7 +164,9 @@ public class MapEditor {
                 this.map.setPointState(i, j, randomMap.isBlocked(i, j) ? EditableMap.PointState.BLOCKED : EditableMap.PointState.FREE);
     }
     public void createRandomMap(String[] args) {
-        Check.condition(args.length == 0);
+        if (!this.canChangeMap(args, 0, false))
+            return;
+
         this.createRandomMap();
     }
 
@@ -152,5 +186,19 @@ public class MapEditor {
             Check.condition(strings.length == 3 && (strings[0].equalsIgnoreCase("block") || strings[0].equalsIgnoreCase("spawn_position")), error);
 
         return strings;
+    }
+
+    private boolean canChangeMap(String[] args, int argsCount, boolean needMap) {
+        String error = "";
+        if (needMap && this.map == null) {
+            error = NO_MAP_DATA;
+        } else if (args.length != argsCount)
+            error = String.format(METHOD_ARGS_COUNT, argsCount, args.length);
+
+        System.out.print(error);
+        return error.length() == 0;
+    }
+    private boolean canChangeMap(String[] args, int argsCount) {
+        return canChangeMap(args, argsCount, true);
     }
 }

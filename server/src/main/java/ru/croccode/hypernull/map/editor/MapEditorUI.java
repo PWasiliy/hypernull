@@ -17,7 +17,11 @@ public class MapEditorUI {
         commands.put("save-file", new StringCommand("сохранить карту в файл", null));
         commands.put("print", new StringCommand("напечатать карту в консоле", mapEditor::printMap));
         commands.put("point", new StringCommand("изменить тип точки на карте", mapEditor::setPointState));
+        commands.put("rect", new StringCommand("изменить тип точек в прямоугольнике", mapEditor::setPointsState));
         commands.put("set-size", new StringCommand("изменить размеры карты", mapEditor::setMapSize));
+        commands.put("set-radius-view", new StringCommand("изменить радиус видимости", mapEditor::setMapRadiusView));
+        commands.put("set-radius-attack", new StringCommand("изменить радиус атаки", mapEditor::setMapRadiusAttack));
+        commands.put("set-radius-mining", new StringCommand("изменить радиус майнинга", mapEditor::setMapRadiusMining));
 
         System.out.printf(COMMAND_INFO_FORMAT, "help", "список команд");
         System.out.printf(COMMAND_INFO_FORMAT, "end", "завершить работу");
