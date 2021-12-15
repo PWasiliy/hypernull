@@ -6,17 +6,17 @@ import ru.croccode.hypernull.server.AsciiMatchPrinter;
 import ru.croccode.hypernull.util.Check;
 import ru.croccode.hypernull.util.Question;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class MapEditor {
     private static final String RELOAD_MAP = "%s приведет к потере несохраненных изменений. Продолжить?";
     private static final String METHOD_ARGS_COUNT = "Количество аргументов метода равно %d, передано - %d.\n";
     private static final String MAP_FILE_INVALID_FORMAT = "Некорректный формат .map у файла \"%s\" в строке номер %d.\n";
-    private static final String NO_MAP_DATA = "В редакторе отсутствует информция о карте матча.\n";
+    private static final String NO_MAP_DATA = "В редакторе отсутствует информация о карте матча.\n";
     private static final String POINT_NOT_INSIDE = "Точка %s не попадает в размеры карты %s.\n";
 
     private EditableMap map;
@@ -24,7 +24,7 @@ public class MapEditor {
     public void open(String filename) {
         Scanner scanner = null;
         try {
-            scanner  = new Scanner(Paths.get(String.format("maps\\%s", filename.endsWith(".map") ? filename : filename + ".map")));
+            scanner  = new Scanner(Paths.get(MapEditor.getFullFilename(filename)));
         } catch (IOException e) {
             System.out.printf("Не удалось открыть файл \"%s\", ошибка: %s.", e.getMessage(), e.getCause());
             return;
@@ -64,6 +64,43 @@ public class MapEditor {
         this.open(args[0]);
     }
 
+    public void save(String filename) {
+        List<Point> blocked = new ArrayList<>();
+        for (int i = 0; i < this.map.getWidth(); i++)
+            for (int j = 0; j <  this.map.getHeight(); j++)
+                if (this.map.isBlocked(i, j))
+                    blocked.add(new Point(i, j));
+
+        File file = new File(MapEditor.getFullFilename(filename));
+        if (file.exists() && !Question.ask("Файл с таким именем уже существует, данные будут перезаписаны. Продолжить?"))
+            return;
+
+        try (FileWriter writer = new FileWriter(file)) {
+            writer.append(this.map.getInfo());
+            blocked.forEach((point) -> {
+                try {
+                    writer.append(String.format("block %d %d\n", point.x(), point.y()));
+                } catch (IOException e) {
+                    System.out.printf("Не удалось записать данные заблокированной точки, ошибка: %s\n", e.getMessage());
+                }
+            });
+
+            for (Point point : this.map.getSpawnPositions())
+                writer.append(String.format("spawn_position %d %d\n", point.x(), point.y()));
+
+            writer.flush();
+
+        } catch (IOException e) {
+            System.out.printf("Не удалось выполнить запись в файл, ошибка: %s\n", e.getMessage());
+        }
+    }
+    public void save(String[] args) {
+        if (!this.canChangeMap(args, 1))
+            return;
+
+        this.save(args[0]);
+    }
+
     public void printMap() {
         AsciiMatchPrinter.printMap(this.map, null, null);
     }
@@ -72,6 +109,35 @@ public class MapEditor {
             return;
 
         this.printMap();
+    }
+
+    public void printMapInfo() {
+        System.out.print(this.map.getInfo());
+    }
+    public void printMapInfo(String[] args) {
+        if (!this.canChangeMap(args, 0))
+            return;
+
+        this.printMapInfo();
+    }
+
+    public void printMarkedPoint(int x, int y) {
+        if (!this.map.isInside(x, y)) {
+            System.out.printf(POINT_NOT_INSIDE, new Point(x, y), this.map.getSize());
+            return;
+        }
+
+        EditableMap.PointState prevState = this.map.getPointState(x, y);
+        Set<Point> coins = new HashSet<>();
+        coins.add(new Point(x, y));
+        AsciiMatchPrinter.printMap(this.map, coins, null);
+        this.map.setPointState(x, y, prevState);
+    }
+    public void printMarkedPoint(String[] args) {
+        if (!this.canChangeMap(args, 2))
+            return;
+
+        this.printMarkedPoint(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
     }
 
     public void setPointState(int x, int y, EditableMap.PointState state) {
@@ -187,6 +253,8 @@ public class MapEditor {
 
         return strings;
     }
+
+    private static String getFullFilename(String filename) { return String.format("maps\\%s", filename.endsWith(".map") ? filename : filename + ".map"); }
 
     private boolean canChangeMap(String[] args, int argsCount, boolean needMap) {
         String error = "";

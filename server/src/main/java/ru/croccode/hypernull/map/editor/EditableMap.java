@@ -68,16 +68,27 @@ public class EditableMap implements MatchMap {
 
         this.points = copy;
     }
+    public String getInfo() {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append(String.format("map_size %d %d\n", this.getWidth(), this.getHeight()));
+        builder.append(String.format("view_radius %d\n", this.radius().view));
+        builder.append(String.format("mining_radius %d\n", this.radius().mining));
+        builder.append(String.format("attack_radius %d\n", this.radius().attack));
+
+        return builder.toString();
+    }
+    public PointState getPointState(int x, int y) {
+        this.checkIsInside(x, y);
+        return this.points[x][y];
+    }
 
     @Override
     public Size getSize() {
         return new Size(points.length, points[0].length);
     }
     @Override
-    public boolean isBlocked(Point point) {
-        this.checkIsInside(point);
-        return points[point.x()][point.y()] == PointState.BLOCKED;
-    }
+    public boolean isBlocked(Point point) { return this.getPointState(point.x(), point.y()) == PointState.BLOCKED; }
     @Override
     public List<Point> getSpawnPositions() {
         ArrayList<Point> result = new ArrayList<>();
